@@ -1,5 +1,8 @@
 package de.lmu.ifi.bouncingbash.server;
 
+import java.util.Collection;
+import java.util.Iterator;
+
 import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
@@ -9,6 +12,7 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 
 import com.eclipsesource.json.Json;
+import com.eclipsesource.json.JsonArray;
 import com.eclipsesource.json.JsonObject;
 
 @Path("/service")
@@ -20,28 +24,6 @@ public class Service {
 	public String ping() {
 		return "ping";
 	}
-
-	/*@POST
-	@Path("/signup")
-	@Produces(MediaType.APPLICATION_JSON)
-	@Consumes(MediaType.APPLICATION_JSON)
-	public String signup(String raw) {
-		
-		DataManager dm = DataManager.getDataManager();		
-		JsonObject response = new JsonObject();
-		response.add("type", "signup");		
-		JsonObject message = (JsonObject) Json.parse(raw);
-		
-		String userId = message.getString("userId", null);
-		String password = message.getString("password",  null);
-		String mac = message.getString("mac",  null);
-		
-		boolean success = dm.createNewUser(userId, password, mac);
-
-		response.add("success",  success);
-		
-		return response.toString();
-	}*/
 	
 	@POST
 	@Path("/testauth")
@@ -121,15 +103,15 @@ public class Service {
 			String mac = message.getString("mac",  null);
 			if(notNull(lat, lng, mac) && lat != 1000 && lng != 1000) {
 				if(dm.locationUpdate(userId, lat, lng, mac)) {
-					response.add("success", "true");
+					response.add("success", true);
 				}
 				else {
-					response.add("success", "false");
+					response.add("success", false);
 					response.add("message", "Location update failed.");
 				}
 			}
 			else {
-				response.add("success", "false");
+				response.add("success", false);
 				response.add("message", "One or more invalid arguments.");
 			}
 		}
@@ -141,7 +123,7 @@ public class Service {
 		return response.toString();
 	}
 	
-	@PUT
+	/*@PUT
 	@Path("/locationdata")
 	@Produces(MediaType.APPLICATION_JSON)
 	@Consumes(MediaType.APPLICATION_JSON)
@@ -163,7 +145,106 @@ public class Service {
 		}
 
 		return response.toString();
+	}*/
+	
+
+	@POST
+	@Path("/postsession")
+	@Produces(MediaType.APPLICATION_JSON)
+	@Consumes(MediaType.APPLICATION_JSON)
+	public String postSession(String raw) {
+		
+		DataManager dm = DataManager.getDataManager();		
+		JsonObject response = new JsonObject();
+		response.add("type", "postsession");
+		JsonObject message = (JsonObject) Json.parse(raw);
+		
+		if(!dm.authenticate(message)) {
+			response.add("success", false);
+			response.add("message", "Authentication failed.");
+		}
+		String userId = ((JsonObject)message.get("credentials")).getString("userId", null);
+		String mac = message.getString("mac",  null);
+		Double lat = message.getDouble("lat",  1000);
+		Double lng = message.getDouble("lng",  1000);
+
+		if(dm.newSession(userId, mac, lat, lng)) {
+			response.add("success", true);
+		}
+		else {
+			response.add("success", false);
+			response.add("message", "Posting the session failed.");
+		}
+		
+		return response.toString();
 	}
+
+
+	@POST
+	@Path("/getsessions")
+	@Produces(MediaType.APPLICATION_JSON)
+	@Consumes(MediaType.APPLICATION_JSON)
+	public String getSessions(String raw) {
+		
+		DataManager dm = DataManager.getDataManager();		
+		JsonObject response = new JsonObject();
+		response.add("type", "getsessions");
+		JsonObject message = (JsonObject) Json.parse(raw);
+		
+		if(!dm.authenticate(message)) {
+			response.add("success", false);
+			response.add("message", "Authentication failed.");
+			return response.toString();
+		}
+		
+		JsonArray jsonSessions = new JsonArray();
+		
+		Collection<Session> sessions = dm.getSessions();
+		for(Session s : sessions) {
+			jsonSessions.add(s.toJson());
+		}
+		response.add("success",  true);
+		response.add("sessions", jsonSessions);
+		
+		return response.toString();
+	}
+
+	@POST
+	@Path("/joinsession")
+	@Produces(MediaType.APPLICATION_JSON)
+	@Consumes(MediaType.APPLICATION_JSON)
+	public String joinSession(String raw) {
+		
+		DataManager dm = DataManager.getDataManager();		
+		JsonObject response = new JsonObject();
+		response.add("type", "joinsession");
+		JsonObject message = (JsonObject) Json.parse(raw);
+		
+		if(!dm.authenticate(message)) {
+			response.add("success", false);
+			response.add("message", "Authentication failed.");
+			return response.toString();
+		}
+		
+		String userId = ((JsonObject)message.get("credentials")).getString("userId", null);
+		String mac = message.getString("mac",  null);
+		String hostId = message.getString("hostId",  null);
+		
+		Session session = dm.joinSession(hostId, userId, mac);
+		if(session == null) {
+			response.add("success", false);
+			response.add("message", "Joining the session failed.");
+			return response.toString();
+		}
+
+		response.add("success", true);
+		response.add("session", session.toJson());
+		// response.add("map", map.toJson());
+		return response.toString();
+		
+	}
+
+
 	
 	private boolean notNull(Object... values) {
 		for(int i = 0; i < values.length; i++) {
