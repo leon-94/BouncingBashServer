@@ -162,6 +162,7 @@ public class Service {
 		if(!dm.authenticate(message)) {
 			response.add("success", false);
 			response.add("message", "Authentication failed.");
+			return response.toString();
 		}
 		String userId = ((JsonObject)message.get("credentials")).getString("userId", null);
 		String mac = message.getString("mac",  null);
@@ -240,6 +241,49 @@ public class Service {
 		response.add("success", true);
 		response.add("session", session.toJson());
 		// response.add("map", map.toJson());
+		return response.toString();
+		
+	}
+
+	@POST
+	@Path("/opensessionpolling")
+	@Produces(MediaType.APPLICATION_JSON)
+	@Consumes(MediaType.APPLICATION_JSON)
+	public String openSessionPolling(String raw) {
+		
+		DataManager dm = DataManager.getDataManager();		
+		JsonObject response = new JsonObject();
+		response.add("type", "opensessionpolling");
+		JsonObject message = (JsonObject) Json.parse(raw);
+		
+		if(!dm.authenticate(message)) {
+			response.add("success", false);
+			response.add("message", "Authentication failed.");
+			return response.toString();
+		}
+		
+		String userId = ((JsonObject)message.get("credentials")).getString("userId", null);
+		Session session = null;
+		
+		int i = 0;
+		while(i < 10) {
+
+			session = dm.checkSession(userId);
+			if(session == null) {
+				try { Thread.sleep(1000); } catch(Exception e) { e.printStackTrace(); }
+			}
+			else {
+				break;
+			}			
+			i++;
+		}
+		if(session != null) {
+			response.add("open", false);
+			response.add("session",  session.toJson());
+		}
+		else response.add("open", true);
+		
+		response.add("success", true);
 		return response.toString();
 		
 	}

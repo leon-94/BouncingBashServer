@@ -4,6 +4,7 @@ import java.util.Collection;
 import java.util.HashMap;
 
 import com.eclipsesource.json.JsonObject;
+import com.eclipsesource.json.JsonValue;
 
 public class DataManager {
 	
@@ -20,7 +21,10 @@ public class DataManager {
 	private DataManager() {
 		users = new HashMap<String, User>();
 		sessions = new HashMap<String, Session>();
-		sessions.put("crazyMotherfucker", new Session("crazyMotherfucker", "a0:45:f2:7b:10:34", 48.5, 13.7));
+		
+		users.put("1", new User("1", "password"));
+		users.put("2", new User("2", "password"));
+		sessions.put("randomDude", new Session("randomDude", "a0:45:f2:7b:10:34", 48.5, 13.7));
 	}
 
 	public synchronized boolean createNewUser(String userId, String password, String mac) {
@@ -36,7 +40,9 @@ public class DataManager {
 	public synchronized boolean authenticate(JsonObject jsonObj) {
 		JsonObject credentials = (JsonObject) jsonObj.get("credentials");
 		if(credentials == null) return false;
-		String userId = credentials.getString("userId", "");
+		JsonValue _userId = credentials.get("userId");
+		if(!_userId.isString()) return false;
+		String userId = _userId.asString();
 		String password = credentials.getString("password", "");
 		return authenticate(userId, password);
 	}
@@ -78,6 +84,15 @@ public class DataManager {
 		session.setOtherMac(otherMac);
 		
 		return session;
+	}
+	
+	public synchronized Session checkSession(String hostId) {
+		Session session = sessions.get(hostId);
+		if(session.getOtherId() == null) return null;
+		else {
+			sessions.remove(hostId);
+			return session;
+		}
 	}
 
 }
