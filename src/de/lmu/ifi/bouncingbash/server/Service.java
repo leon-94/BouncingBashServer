@@ -237,10 +237,17 @@ public class Service {
 			response.add("message", "Joining the session failed.");
 			return response.toString();
 		}
+		
+//		Map map = dm.getMap(session.getLat(), session.getLng());
+//		if(map == null) {
+//			response.add("success", false);
+//			response.add("message", "No map available.");
+//			return response.toString();
+//		}
+//		response.add("map", map.data);
 
 		response.add("success", true);
 		response.add("session", session.toJson());
-		// response.add("map", map.toJson());
 		return response.toString();
 		
 	}

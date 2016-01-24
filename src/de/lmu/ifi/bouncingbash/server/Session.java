@@ -10,12 +10,14 @@ public class Session {
 	private String otherMac;
 	private double lat;
     private double lng;
-	
-	public Session(String hostId, String hostMac, double lat, double lng) {
+    private String mapData;
+
+	public Session(String hostId, String hostMac, double lat, double lng, String m) {
 		this.hostId = hostId;
 		this.hostMac = hostMac;
 		this.lat = lat;
 		this.lng = lng;
+		this.mapData = m;
 	}
 	
 	public JsonObject toJson() {
@@ -27,24 +29,33 @@ public class Session {
 		json.add("otherMac", otherMac);
 		json.add("lat", lat);
 		json.add("lng", lng);
+		json.add("mapData", mapData);
 		
 		return json;
 	}
 
-    public static Session fromJson(JsonObject json) {
-        
-        String hostId = json.getString("hostId", null);
-        String hostMac = json.getString("hostMac", null);
-        String otherId = json.getString("otherId", null);
-        String otherMac = json.getString("otherMac", null);
-        double lat = json.getDouble("lat", 1000);
-        double lng = json.getDouble("lng", 1000);
+//    public static Session fromJson(JsonObject json) {
+//        
+//        String hostId = json.getString("hostId", null);
+//        String hostMac = json.getString("hostMac", null);
+//        String otherId = json.getString("otherId", null);
+//        String otherMac = json.getString("otherMac", null);
+//        double lat = json.getDouble("lat", 1000);
+//        double lng = json.getDouble("lng", 1000);
+//
+//        Session session = new Session(hostId, hostMac, lat, lng);
+//        session.setOtherId(otherId);
+//        session.setOtherMac(otherMac);
+//
+//        return session;
+//    }
 
-        Session session = new Session(hostId, hostMac, lat, lng);
-        session.setOtherId(otherId);
-        session.setOtherMac(otherMac);
+    public String getMapData() {
+        return mapData;
+    }
 
-        return session;
+    public void setMapData(String mapData) {
+        this.mapData = mapData;
     }
 
     public double getLat() {

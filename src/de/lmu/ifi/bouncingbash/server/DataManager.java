@@ -12,6 +12,7 @@ public class DataManager {
 	
 	private HashMap<String, User> users;
 	private HashMap<String, Session> sessions;
+	private HashMap<String, Map> maps;
 	
 	public static synchronized DataManager getDataManager() {
 		if(dm == null) dm = new DataManager();
@@ -21,10 +22,12 @@ public class DataManager {
 	private DataManager() {
 		users = new HashMap<String, User>();
 		sessions = new HashMap<String, Session>();
+		maps = new HashMap<String, Map>();
 		
 		users.put("1", new User("1", "password"));
 		users.put("2", new User("2", "password"));
-		sessions.put("randomDude", new Session("randomDude", "a0:45:f2:7b:10:34", 48.5, 13.7));
+		maps.put("map00", new Map("map00", "default", Map.defaultData, 48.6, 13.6));
+//		sessions.put("randomDude", new Session("randomDude", "a0:45:f2:7b:10:34", 48.5, 13.7));
 	}
 
 	public synchronized boolean createNewUser(String userId, String password, String mac) {
@@ -66,7 +69,9 @@ public class DataManager {
 	public synchronized boolean newSession(String userId, String mac, double lat, double lng) {
 		
 		if(sessions.get(userId) != null) return false;
-		sessions.put(userId, new Session(userId, mac, lat, lng));
+		Map m = getMap(lat, lng);
+		String mapData = m.data;
+		sessions.put(userId, new Session(userId, mac, lat, lng, mapData));
 		return true;
 	}
 	
@@ -93,6 +98,11 @@ public class DataManager {
 			sessions.remove(hostId);
 			return session;
 		}
+	}
+	
+	public synchronized Map getMap(double lat, double lng) {
+		
+		return maps.get("map00");
 	}
 
 }
